@@ -84,23 +84,26 @@ class LogisticModel(object):
             raise ItemShapeError('区分度参数或难度参数或特质参数只能是一维数组或二维数组的')
         else:
             # 如果区分度和难度的参数个数不对等，则报错
-            if slop_shape[0] != threshold_shape[0]:
-                raise ItemShapeError('区分度和难度参数的数量级不匹配')
-
+            if slop_dim_count == 1:
+                if slop_shape[0] != threshold_shape[0]:
+                    raise ItemShapeError('区分度和难度参数的数量级不匹配')
+                # 如果区分度是一位数组，但是难度是二维数组，则区分度升维
+                if threshold_dim_count == 2:
+                    slop.shape = slop_shape[0], 1
             # 如果区分度为二维数组，且shape属性不是形如(xx, 1)或（1， xx）
-            if slop_dim_count == 2:
+            elif slop_dim_count == 2:
                 if slop_shape[1] == 1:
-                    pass
+                    if slop_shape[0] != threshold_shape[0]:
+                        raise ItemShapeError('区分度和难度参数的数量级不匹配')
                 elif slop_shape[0] == 1:
+                    if slop_shape[1] != threshold_shape[0]:
+                        raise ItemShapeError('区分度和难度参数的数量级不匹配')
+                else:
                     raise SlopShapeError('区分度参数为二维数组时，shape必须形如（xx, 1）或（1， xx）')
 
                 # 如果区分度为二维数组，但是难度是一位数组，则区分度降维
-                elif threshold_dim_count == 1:
+                if threshold_dim_count == 1:
                     slop = slop[0, ]
-
-            # 如果区分度是一位数组，但是难度是二维数组，则区分度升维
-            if slop_dim_count == 1 and threshold_dim_count == 2:
-                slop.shape = slop_shape[0], 1
 
             # 如果试题参数的个数大于1，并且被试特质测试也大于1，则报错
             if theta_dim_count == 2:
