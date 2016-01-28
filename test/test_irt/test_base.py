@@ -1,7 +1,7 @@
 # coding=utf-8
 from japp.irt import LogisticModel
 from unittest import TestCase
-from japp.irt.exceptions import SlopThresholdDimError, ThetaItemPareDimError, ItemParaShapeError
+from japp.irt.exceptions import ThetaItemPareDimError, ItemParaShapeError, SlopShapeError
 
 
 class TestLogisticModel(TestCase):
@@ -26,14 +26,14 @@ class TestLogisticModel(TestCase):
 
     def test_slop_dim_error(self):
         kwargs = {'slop': [[1, 2, 3]], 'threshold': [1, 2, 3], 'theta': 1}
-        self.assertRaises(ItemParaShapeError, LogisticModel, **kwargs)
+        self.assertRaises(SlopShapeError, LogisticModel, **kwargs)
 
     def test_item_para_dim_error_args(self):
         """
         测试试题区分度的维度和试题难度维度不一致
         """
         kwargs = {'slop': [1, 2, 3], 'threshold': [1, 2], 'theta': 1}
-        self.assertRaises(SlopThresholdDimError, LogisticModel, **kwargs)
+        self.assertRaises(ItemParaShapeError, LogisticModel, **kwargs)
 
     def test_theta_dim_error_args(self):
         """
