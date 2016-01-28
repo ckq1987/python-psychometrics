@@ -1,8 +1,6 @@
 # coding=utf-8
 import numpy as np
-from numpy import ndarray
-from numpy.matrixlib.defmatrix import matrix
-from japp.irt.exceptions import ThetaItemPareDimError, ItemParaShapeError, SlopShapeError
+from japp.irt.exceptions import ThetaItemPareDimError, ItemShapeError, SlopShapeError
 from japp.utils import cached_property
 from japp.utils.tools import base_item_parameter_type_check
 
@@ -22,32 +20,10 @@ class LogisticModel(object):
         :param theta: 特质值，浮点或整数，或shape为（XX，1）的numpy二维数组
         """
         slop = base_item_parameter_type_check(slop, '区分度')
-        threshold = base_item_parameter_type_check(threshold, '区分度')
+        threshold = base_item_parameter_type_check(threshold, '难度')
         theta = base_item_parameter_type_check(theta, '特质')
 
-        threshold_shape = np.shape(threshold)
-        slop_shape = np.shape(slop)
-
-        # 区分度和难度参数维度的检验，如果是多维数组，则报错
-        if len(slop_shape) > 2 or len(threshold_shape) > 2:
-            raise ItemParaShapeError(u'区分度参数或难度参数只能是一维数组或二维数组的')
-        elif len(slop_shape) > 0 and len(threshold_shape) > 0:
-            # 如果区分度和难度的参数个数不对等，则报错
-            if slop_shape[0] != threshold_shape[0]:
-                raise ItemParaShapeError(u'区分度和难度参数的数量级不匹配')
-            # 如果区分度为二维数组，且shape属性不是形如(xx, 1)
-            if len(slop_shape) == 2 and slop_shape[1] != 1:
-                raise SlopShapeError(u'区分度参数为二维数组时，shape必须形如（xx, 1)')
-            # 如果区分度为二维数组，但是难度是一位数组，则区分度降维
-            if len(slop_shape) == 2 and len(threshold_shape) == 1:
-                slop = slop[0, ]
-            # 如果区分度是一位数组，但是难度是二维数组，则区分度升维
-            if len(slop_shape) == 1 and len(threshold_shape) == 2:
-                slop.shape = slop_shape, 1
-            # 如果试题参数的个数大于1，并且被试特质测试也大于1，则报错
-            if slop_shape[0] > 1 and np.shape(theta)[0] > 1:
-                raise ThetaItemPareDimError(u'试题参数为非标量或包含元素多于1个时，'
-                                            u'被试特质参数必须为标量或包含元素仅为1个，反之同理')
+        slop, theta = self.__shape_check(slop, threshold, theta)
 
         self.slop = slop
         self.threshold = threshold
@@ -81,3 +57,56 @@ class LogisticModel(object):
         """
         dp = self.d_prob_values
         return self.slop * dp
+
+    @staticmethod
+    def __shape_check(slop, threshold, theta):
+        """
+        项目参数和特质参数的维度检验
+        并对slop和theta进行维度转换
+        :param slop: numpy数组
+        :param theta: numpy数组
+        :param threshold: numpy数组
+        :raise ThetaItemPareDimError:
+        """
+
+        # 下面是参数的维度形状
+        threshold_shape = np.shape(threshold)
+        slop_shape = np.shape(slop)
+        theta_shape = np.shape(theta)
+
+        # 下面是参数的维度个数
+        slop_dim_count = len(slop_shape)
+        threshold_dim_count = len(threshold_shape)
+        theta_dim_count = len(theta_shape)
+
+        # 区分度和难度参数维度的检验，如果是多维数组，则报错
+        if slop_dim_count > 2 or threshold_dim_count > 2 or theta_dim_count > 2:
+            raise ItemShapeError('区分度参数或难度参数或特质参数只能是一维数组或二维数组的')
+        else:
+            # 如果区分度和难度的参数个数不对等，则报错
+            if slop_shape[0] != threshold_shape[0]:
+                raise ItemShapeError('区分度和难度参数的数量级不匹配')
+
+            # 如果区分度为二维数组，且shape属性不是形如(xx, 1)或（1， xx）
+            if slop_dim_count == 2:
+                if slop_shape[1] == 1:
+                    pass
+                elif slop_shape[0] == 1:
+                    raise SlopShapeError('区分度参数为二维数组时，shape必须形如（xx, 1）或（1， xx）')
+
+                # 如果区分度为二维数组，但是难度是一位数组，则区分度降维
+                elif threshold_dim_count == 1:
+                    slop = slop[0, ]
+
+            # 如果区分度是一位数组，但是难度是二维数组，则区分度升维
+            if slop_dim_count == 1 and threshold_dim_count == 2:
+                slop.shape = slop_shape[0], 1
+
+            # 如果试题参数的个数大于1，并且被试特质测试也大于1，则报错
+            if theta_dim_count == 2:
+                if theta_shape[1] != 1:
+                    raise ThetaItemPareDimError('被试特质参数为二维数组时，shape属性必须形为（xx, 1）')
+            else:
+                if theta_shape[0] != 1:
+                    theta.shape = theta_shape[0], 1
+        return slop, theta

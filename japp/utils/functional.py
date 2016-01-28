@@ -1,6 +1,7 @@
 # coding=utf-8
 
-class cached_property(object):
+
+class CachedProperty(object):
     """
     缓存属性的装饰器，从django抄的，
     详见https://docs.djangoproject.com/en/1.9/ref/utils/#module-django.utils.functional
@@ -15,3 +16,5 @@ class cached_property(object):
             return self
         res = instance.__dict__[self.name] = self.func(instance)
         return res
+
+cached_property = CachedProperty

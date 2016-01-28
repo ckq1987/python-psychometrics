@@ -1,7 +1,7 @@
 # coding=utf-8
 
 
-class ItemParaShapeError(Exception):
+class ItemShapeError(Exception):
     """
     试题区分度数组和难度数组的不一致
     不一致的情况例如
