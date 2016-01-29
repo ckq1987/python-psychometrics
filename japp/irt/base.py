@@ -60,6 +60,7 @@ class LogisticModel(object):
 
     @staticmethod
     def __shape_check(slop, threshold, theta):
+        # TODO 下面代码太糟糕了，待有空重构下
         """
         项目参数和特质参数的维度检验
         并对slop和theta进行维度转换
@@ -95,15 +96,17 @@ class LogisticModel(object):
                 if slop_shape[1] == 1:
                     if slop_shape[0] != threshold_shape[0]:
                         raise ItemShapeError('区分度和难度参数的数量级不匹配')
+                    # 如果区分度为二维数组，但是难度是一位数组，则区分度降维
+                    if threshold_dim_count == 1:
+                        slop.shape = (slop_shape[0],)
                 elif slop_shape[0] == 1:
                     if slop_shape[1] != threshold_shape[0]:
                         raise ItemShapeError('区分度和难度参数的数量级不匹配')
+                    # 如果区分度为二维数组，但是难度是一位数组，则区分度降维
+                    if threshold_dim_count == 1:
+                        slop.shape = (slop_shape[1],)
                 else:
                     raise SlopShapeError('区分度参数为二维数组时，shape必须形如（xx, 1）或（1， xx）')
-
-                # 如果区分度为二维数组，但是难度是一位数组，则区分度降维
-                if threshold_dim_count == 1:
-                    slop = slop[0, ]
 
             # 如果试题参数的个数大于1，并且被试特质测试也大于1，则报错
             if theta_dim_count == 2:

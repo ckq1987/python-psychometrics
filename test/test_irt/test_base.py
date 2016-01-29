@@ -50,6 +50,9 @@ class TestLogisticModel(TestCase):
         kwargs = {'slop': [1, 2, 3], 'threshold': [1, 2], 'theta': 1}
         self.assertRaisesRegexp(ItemShapeError, '区分度和难度参数的数量级不匹配',
                                 LogisticModel, **kwargs)
+        kwargs = {'slop': [1, 2, 3], 'threshold': [[1, 2, 3]], 'theta': 1}
+        self.assertRaisesRegexp(ItemShapeError, '区分度和难度参数的数量级不匹配',
+                                LogisticModel, **kwargs)
 
     def test_theta_dim_error_args(self):
         """
@@ -88,3 +91,11 @@ class TestLogisticModel(TestCase):
         kwargs = {'slop': [[1, 2.1, 3.1]], 'threshold': [1, 2.01, 3.01], 'theta': 1.0}
         logit_model = LogisticModel(**kwargs)
         np.testing.assert_equal(logit_model.slop, np.array([1, 2.1, 3.1]))
+        kwargs = {'slop': [[1], [2.1], [3.1]], 'threshold': [1, 2.01, 3.01], 'theta': 1.0}
+        logit_model = LogisticModel(**kwargs)
+        np.testing.assert_equal(logit_model.slop, np.array([1, 2.1, 3.1]))
+
+    def test_matrix_para_convert_type(self):
+        kwargs = {'slop': np.matrix([1, 0.1, 0.2]), 'threshold': [1, 2.01, 3.01], 'theta': 1.0}
+        logit_model = LogisticModel(**kwargs)
+        np.testing.assert_equal(logit_model.slop, np.array([1, 0.1, 0.2]))
